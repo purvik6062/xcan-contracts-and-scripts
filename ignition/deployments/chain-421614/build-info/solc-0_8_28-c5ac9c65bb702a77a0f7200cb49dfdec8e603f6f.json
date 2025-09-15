@@ -1,0 +1,47 @@
+{
+  "_format": "hh3-sol-build-info-1",
+  "id": "solc-0_8_28-c5ac9c65bb702a77a0f7200cb49dfdec8e603f6f",
+  "solcVersion": "0.8.28",
+  "solcLongVersion": "0.8.28+commit.7893614a",
+  "userSourceNameMap": {
+    "contracts/BatchMinter.sol": "project/contracts/BatchMinter.sol"
+  },
+  "input": {
+    "language": "Solidity",
+    "settings": {
+      "evmVersion": "cancun",
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "outputSelection": {
+        "*": {
+          "": [
+            "ast"
+          ],
+          "*": [
+            "abi",
+            "evm.bytecode",
+            "evm.deployedBytecode",
+            "evm.methodIdentifiers",
+            "metadata"
+          ]
+        }
+      },
+      "remappings": [
+        "project/:@openzeppelin/contracts/=npm/@openzeppelin/contracts@5.4.0/"
+      ]
+    },
+    "sources": {
+      "npm/@openzeppelin/contracts@5.4.0/access/Ownable.sol": {
+        "content": "// SPDX-License-Identifier: MIT\n// OpenZeppelin Contracts (last updated v5.0.0) (access/Ownable.sol)\n\npragma solidity ^0.8.20;\n\nimport {Context} from \"../utils/Context.sol\";\n\n/**\n * @dev Contract module which provides a basic access control mechanism, where\n * there is an account (an owner) that can be granted exclusive access to\n * specific functions.\n *\n * The initial owner is set to the address provided by the deployer. This can\n * later be changed with {transferOwnership}.\n *\n * This module is used through inheritance. It will make available the modifier\n * `onlyOwner`, which can be applied to your functions to restrict their use to\n * the owner.\n */\nabstract contract Ownable is Context {\n    address private _owner;\n\n    /**\n     * @dev The caller account is not authorized to perform an operation.\n     */\n    error OwnableUnauthorizedAccount(address account);\n\n    /**\n     * @dev The owner is not a valid owner account. (eg. `address(0)`)\n     */\n    error OwnableInvalidOwner(address owner);\n\n    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);\n\n    /**\n     * @dev Initializes the contract setting the address provided by the deployer as the initial owner.\n     */\n    constructor(address initialOwner) {\n        if (initialOwner == address(0)) {\n            revert OwnableInvalidOwner(address(0));\n        }\n        _transferOwnership(initialOwner);\n    }\n\n    /**\n     * @dev Throws if called by any account other than the owner.\n     */\n    modifier onlyOwner() {\n        _checkOwner();\n        _;\n    }\n\n    /**\n     * @dev Returns the address of the current owner.\n     */\n    function owner() public view virtual returns (address) {\n        return _owner;\n    }\n\n    /**\n     * @dev Throws if the sender is not the owner.\n     */\n    function _checkOwner() internal view virtual {\n        if (owner() != _msgSender()) {\n            revert OwnableUnauthorizedAccount(_msgSender());\n        }\n    }\n\n    /**\n     * @dev Leaves the contract without owner. It will not be possible to call\n     * `onlyOwner` functions. Can only be called by the current owner.\n     *\n     * NOTE: Renouncing ownership will leave the contract without an owner,\n     * thereby disabling any functionality that is only available to the owner.\n     */\n    function renounceOwnership() public virtual onlyOwner {\n        _transferOwnership(address(0));\n    }\n\n    /**\n     * @dev Transfers ownership of the contract to a new account (`newOwner`).\n     * Can only be called by the current owner.\n     */\n    function transferOwnership(address newOwner) public virtual onlyOwner {\n        if (newOwner == address(0)) {\n            revert OwnableInvalidOwner(address(0));\n        }\n        _transferOwnership(newOwner);\n    }\n\n    /**\n     * @dev Transfers ownership of the contract to a new account (`newOwner`).\n     * Internal function without access restriction.\n     */\n    function _transferOwnership(address newOwner) internal virtual {\n        address oldOwner = _owner;\n        _owner = newOwner;\n        emit OwnershipTransferred(oldOwner, newOwner);\n    }\n}\n"
+      },
+      "npm/@openzeppelin/contracts@5.4.0/utils/Context.sol": {
+        "content": "// SPDX-License-Identifier: MIT\n// OpenZeppelin Contracts (last updated v5.0.1) (utils/Context.sol)\n\npragma solidity ^0.8.20;\n\n/**\n * @dev Provides information about the current execution context, including the\n * sender of the transaction and its data. While these are generally available\n * via msg.sender and msg.data, they should not be accessed in such a direct\n * manner, since when dealing with meta-transactions the account sending and\n * paying for execution may not be the actual sender (as far as an application\n * is concerned).\n *\n * This contract is only required for intermediate, library-like contracts.\n */\nabstract contract Context {\n    function _msgSender() internal view virtual returns (address) {\n        return msg.sender;\n    }\n\n    function _msgData() internal view virtual returns (bytes calldata) {\n        return msg.data;\n    }\n\n    function _contextSuffixLength() internal view virtual returns (uint256) {\n        return 0;\n    }\n}\n"
+      },
+      "project/contracts/BatchMinter.sol": {
+        "content": "// SPDX-License-Identifier: MIT\r\npragma solidity ^0.8.27;\r\n\r\nimport {Ownable} from \"@openzeppelin/contracts/access/Ownable.sol\";\r\n\r\ninterface ISpeedrunStylus {\r\n    function safeMint(address to, string memory uri) external returns (uint256);\r\n}\r\n\r\n/**\r\n * @title BatchMinter\r\n * @notice Helper contract to mint one or many NFTs on an already-deployed\r\n *         `SpeedrunStylus` contract. To use, transfer ownership of the NFT\r\n *         contract to this contract so it becomes the `onlyOwner` allowed to mint.\r\n */\r\ncontract BatchMinter is Ownable {\r\n    ISpeedrunStylus public immutable nft;\r\n\r\n    event Minted(address indexed to, uint256 indexed tokenId, string uri);\r\n\r\n    constructor(\r\n        address initialOwner,\r\n        address nftAddress\r\n    ) Ownable(initialOwner) {\r\n        require(nftAddress != address(0), \"nft addr zero\");\r\n        nft = ISpeedrunStylus(nftAddress);\r\n    }\r\n\r\n    /**\r\n     * @notice Mint a single NFT to `to` with `uri`.\r\n     * @dev Requires this contract to be the owner of the NFT contract.\r\n     */\r\n    function mintOne(\r\n        address to,\r\n        string calldata uri\r\n    ) external onlyOwner returns (uint256 tokenId) {\r\n        tokenId = nft.safeMint(to, uri);\r\n        emit Minted(to, tokenId, uri);\r\n    }\r\n\r\n    /**\r\n     * @notice Mint multiple NFTs to recipients with a single shared URI.\r\n     * @param recipients The list of addresses to receive an NFT.\r\n     * @param uri The same metadata URI to assign to each minted token.\r\n     * @return tokenIds The list of token IDs minted in order.\r\n     */\r\n    function mintBatchSameURI(\r\n        address[] calldata recipients,\r\n        string calldata uri\r\n    ) external onlyOwner returns (uint256[] memory tokenIds) {\r\n        uint256 length = recipients.length;\r\n        require(length > 0, \"no recipients\");\r\n        tokenIds = new uint256[](length);\r\n        for (uint256 i = 0; i < length; i++) {\r\n            uint256 tokenId = nft.safeMint(recipients[i], uri);\r\n            tokenIds[i] = tokenId;\r\n            emit Minted(recipients[i], tokenId, uri);\r\n        }\r\n    }\r\n\r\n    /**\r\n     * @notice Mint multiple NFTs to recipients with per-item URIs.\r\n     * @param recipients The list of addresses to receive an NFT.\r\n     * @param uris The list of token URIs matching `recipients` by index.\r\n     * @return tokenIds The list of token IDs minted in order.\r\n     */\r\n    function mintBatchWithURIs(\r\n        address[] calldata recipients,\r\n        string[] calldata uris\r\n    ) external onlyOwner returns (uint256[] memory tokenIds) {\r\n        uint256 length = recipients.length;\r\n        require(length > 0, \"no recipients\");\r\n        require(length == uris.length, \"length mismatch\");\r\n        tokenIds = new uint256[](length);\r\n        for (uint256 i = 0; i < length; i++) {\r\n            uint256 tokenId = nft.safeMint(recipients[i], uris[i]);\r\n            tokenIds[i] = tokenId;\r\n            emit Minted(recipients[i], tokenId, uris[i]);\r\n        }\r\n    }\r\n}\r\n"
+      }
+    }
+  }
+}
